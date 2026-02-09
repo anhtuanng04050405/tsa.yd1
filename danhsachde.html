@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách đề thi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- COPY STYLE CƠ BẢN TỪ INDEX.HTML ĐỂ ĐỒNG BỘ --- */
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; overflow: hidden; transition: all 0.3s ease; }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 250px; height: 100vh; background: white; border-right: 1px solid #dee2e6; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 1000; transition: width 0.3s ease; }
+        .sidebar-logo { padding: 20px; text-align: center; height: 80px; display: flex; align-items: center; justify-content: center; }
+        .logo-full { max-height: 60px; max-width: 100%; display: block; }
+        .logo-icon { max-height: 50px; max-width: 100%; display: none; }
+        .sidebar-menu { margin-top: 20px; }
+        .menu-item { display: flex; align-items: center; padding: 12px 20px; color: #555; text-decoration: none; transition: 0.3s; font-weight: 500; white-space: nowrap; overflow: hidden; }
+        .menu-item i { margin-right: 15px; width: 20px; text-align: center; font-size: 18px; transition: 0.3s; }
+        .menu-item:hover { background-color: #f1f1f1; color: #333; }
+        .menu-item.active { background-color: #fff0f0; color: #d32f2f; border-left: 4px solid #d32f2f; }
+
+        /* Main Content Styles */
+        .main-content { margin-left: 250px; height: 100vh; display: flex; flex-direction: column; transition: margin-left 0.3s ease; }
+        .top-header { height: 60px; background: white; border-bottom: 1px solid #dee2e6; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .toggle-btn { border: none; background: transparent; font-size: 20px; cursor: pointer; color: #333; padding: 5px 10px; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #ddd; }
+        .user-details { text-align: right; line-height: 1.2; }
+        .user-name { font-weight: 600; font-size: 14px; }
+        .logout-text { font-size: 12px; color: #d32f2f; cursor: pointer; }
+
+        /* Footer */
+        .footer { position: fixed; bottom: 10px; left: 250px; right: 0; text-align: center; color: #888; font-size: 12px; pointer-events: none; transition: left 0.3s ease; }
+
+        /* Collapsed Logic */
+        body.collapsed .sidebar { width: 80px; }
+        body.collapsed .main-content { margin-left: 80px; }
+        body.collapsed .footer { left: 80px; }
+        body.collapsed .menu-item span { display: none; }
+        body.collapsed .menu-item { justify-content: center; padding: 15px 10px; }
+        body.collapsed .menu-item i { margin-right: 0; font-size: 22px; }
+        body.collapsed .logo-full { display: none; }
+        body.collapsed .logo-icon { display: block; }
+
+        /* --- CÁC STYLE RIÊNG CHO TRANG DANH SÁCH ĐỀ --- */
+        .content-scroll { overflow-y: auto; padding: 20px; flex-grow: 1; position: relative; }
+
+        /* 1. Màn hình danh sách (Grid) */
+        .exam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .exam-card { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; transition: 0.3s; position: relative; }
+        .exam-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #d32f2f; }
+        .tag-badge { position: absolute; top: 15px; left: 15px; background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; font-size: 12px; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        .exam-name { margin-top: 25px; font-weight: 700; font-size: 16px; margin-bottom: 20px; line-height: 1.4; color: #333; }
+        .btn-continue { width: 100%; border: 1px solid #0d6efd; color: #0d6efd; background: white; padding: 8px; border-radius: 20px; font-weight: 600; transition: 0.3s; text-transform: uppercase; font-size: 14px; }
+        .btn-continue:hover { background: #0d6efd; color: white; }
+
+        /* 2. Màn hình nhập mã (Ẩn mặc định) */
+        #authSection { display: none; max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; }
+        .auth-logo { max-width: 200px; margin-bottom: 20px; }
+        .form-check-group { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .form-check-group label { background: #e9ecef; padding: 10px 15px; border-radius: 4px 0 0 4px; border: 1px solid #ced4da; border-right: none; font-weight: 500; color: #555; white-space: nowrap;}
+        .form-check-group input { border-radius: 0 4px 4px 0; height: 46px; }
+        .btn-check-code { background: #0044cc; color: white; width: 100%; padding: 10px; border-radius: 6px; font-weight: 600; border: none; }
+        .btn-check-code:hover { background: #003399; }
+        .back-link { display: block; margin-top: 15px; color: #0d6efd; text-decoration: none; font-size: 14px; cursor: pointer; }
+        .back-link:hover { text-decoration: underline; }
+
+        /* 3. Màn hình xem PDF (Ẩn mặc định) - Copy style từ index.html */
+        #pdfSection { display: none; height: 100%; flex-direction: column; }
+        .pdf-toolbar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; }
+        .btn-tool { background: #fff; color: #333; border: 1px solid #ccc; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-tool:hover { background: #f0f0f0; }
+        #iframeContainer { flex-grow: 1; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: calc(100vh - 150px); }
+        #pdfFrame { width: 100%; height: 100%; border: none; transition: transform 0.3s ease; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="img/logo.jpg" alt="Logo" class="logo-full">
+            <img src="img/rutgon.jpg" alt="HSA" class="logo-icon">
+        </div>
+        <div class="sidebar-menu">
+            <a href="danhsachde.html" class="menu-item active"><i class="fa-regular fa-clock"></i> <span>Danh sách đề</span></a>
+            <a href="index.html" class="menu-item"><i class="fa-solid fa-magnifying-glass"></i> <span>Tra cứu</span></a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-header">
+            <button class="toggle-btn" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+            <div class="user-info">
+                <i class="fa-regular fa-bell fa-lg text-secondary"></i>
+                <div class="user-details"><div class="user-name">Nguyễn Anh Tuấn</div><div class="logout-text">Đăng xuất</div></div>
+                <img src="img/avatar.jpg" alt="User" class="avatar">
+            </div>
+        </div>
+
+        <div class="content-scroll">
+            
+            <!-- 1. DANH SÁCH ĐỀ THI -->
+            <div id="listSection">
+                <h4 style="color: #003366; font-weight: 700; margin-bottom: 20px;">Danh sách phòng thi</h4>
+                <div class="exam-grid" id="examContainer">
+                    <!-- Javascript sẽ render danh sách vào đây -->
+                </div>
+            </div>
+
+            <!-- 2. KHUNG NHẬP MÃ -->
+            <div id="authSection">
+                <div class="text-start mb-3"><span class="back-link" onclick="goBackToList()" style="margin:0"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</span></div>
+                
+                <h5 id="selectedExamTitle" style="font-weight: 700; margin-bottom: 20px;">TÊN ĐỀ THI Ở ĐÂY</h5>
+                <img src="img/logo.jpg" alt="Logo" class="auth-logo">
+                <p>Xác nhận thông tin</p>
+
+                <div class="form-check-group">
+                    <label>Mã xác nhận</label>
+                    <input type="password" id="inputCode" class="form-control" placeholder="Nhập mã code...">
+                </div>
+                
+                <p class="text-start text-primary" style="font-size: 13px; font-style: italic;">
+                    Vui lòng liên hệ với người quản trị để nhận code
+                </p>
+
+                <button class="btn-check-code" onclick="verifyCode()">Bắt đầu</button>
+                <div id="msgError" class="text-danger mt-2" style="display:none; font-size:14px;"><i class="fa-solid fa-triangle-exclamation"></i> Mã xác nhận không chính xác!</div>
+            </div>
+
+            <!-- 3. TRÌNH XEM PDF -->
+            <div id="pdfSection">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="back-link" onclick="goBackToAuth()" style="margin:0"><i class="fa-solid fa-arrow-left"></i> Quay lại nhập mã</span>
+                    <div class="pdf-toolbar" style="margin:0">
+                        <button class="btn-tool" onclick="rotatePDF()"><i class="fa-solid fa-rotate-right"></i> Xoay ngang</button>
+                        <button class="btn-tool" onclick="openNewTab()"><i class="fa-solid fa-expand"></i> Toàn màn hình</button>
+                    </div>
+                </div>
+                
+                <div id="iframeContainer">
+                    <iframe id="pdfFrame" src=""></iframe>
+                </div>
+            </div>
+
+            <div class="footer">&copy; 2026 NGUYỄN ANH TUẤN - K58 - THPT YÊN ĐỊNH 1</div>
+        </div>
+    </div>
+
+    <script>
+        // --- QUẢN LÝ DANH SÁCH ĐỀ (ADMIN SỬA Ở ĐÂY) ---
+        // id: tương ứng với tên file trong thư mục "de" và "pass" (VD: id:1 -> de/1.pdf và pass/1.txt)
+        const DANH_SACH_DE = [
+            { id: 1, name: "1. ĐỀ MÔN LỊCH SỬ (ĐỀ 01-20)", tag: "HSA" },
+            { id: 2, name: "2. ĐỀ TƯ DUY ĐỊNH LƯỢNG (ĐỀ 01-10)", tag: "HSA" },
+            { id: 3, name: "3. TEST", tag: "TSA" },
+            { id: 4, name: "4. TEST", tag: "HSA" },
+            { id: 5, name: "5. TEST", tag: "HSA" },
+            { id: 6, name: "6. TEST", tag: "TSA" },
+            { id: 7, name: "7. TEST", tag: "HSA" },
+            { id: 8, name: "8. TEST", tag: "HSA" },
+            { id: 9, name: "9. TEST", tag: "TSA" },
+        ];
+        // ------------------------------------------------
+
+        const listSection = document.getElementById('listSection');
+        const authSection = document.getElementById('authSection');
+        const pdfSection = document.getElementById('pdfSection');
+        const examContainer = document.getElementById('examContainer');
+        const pdfFrame = document.getElementById('pdfFrame');
+        let currentExamId = null;
+        let currentRotation = 0;
+
+        // 1. Render danh sách đề khi vào trang
+        function renderExams() {
+            examContainer.innerHTML = '';
+            DANH_SACH_DE.forEach(exam => {
+                const html = `
+                    <div class="exam-card">
+                        <span class="tag-badge">${exam.tag}</span>
+                        <h5 class="exam-name">${exam.name}</h5>
+                        <button class="btn-continue" onclick="selectExam(${exam.id}, '${exam.name}')">Tiếp tục</button>
+                    </div>
+                `;
+                examContainer.innerHTML += html;
+            });
+        }
+
+        // 2. Chọn đề -> Chuyển sang màn nhập code
+        function selectExam(id, name) {
+            currentExamId = id;
+            document.getElementById('selectedExamTitle').innerText = name;
+            document.getElementById('inputCode').value = ''; // Xóa input cũ
+            document.getElementById('msgError').style.display = 'none';
+
+            listSection.style.display = 'none';
+            authSection.style.display = 'block';
+            pdfSection.style.display = 'none';
+        }
+
+        // 3. Xử lý nút Back
+        function goBackToList() {
+            authSection.style.display = 'none';
+            listSection.style.display = 'block';
+            currentExamId = null;
+        }
+
+        function goBackToAuth() {
+            pdfSection.style.display = 'none';
+            authSection.style.display = 'block';
+            pdfFrame.src = ""; // Stop PDF loading
+        }
+
+// 4. KIỂM TRA MÃ CODE (QUAN TRỌNG)
+        function verifyCode() {
+            const userCode = document.getElementById('inputCode').value.trim();
+            if (!userCode) {
+                alert("Vui lòng nhập mã!");
+                return;
+            }
+
+            fetch(`pass/${currentExamId}.txt?t=${new Date().getTime()}`) // Thêm time để tránh cache
+                .then(response => {
+                    if (!response.ok) throw new Error("Không tìm thấy file pass");
+                    return response.text();
+                })
+                .then(serverCode => {
+                    // So sánh mã (Không phân biệt hoa thường)
+                    // userCode.toUpperCase(): Biến mã người dùng nhập thành in hoa
+                    // serverCode.trim().toUpperCase(): Cắt khoảng trắng thừa và biến mã trong file thành in hoa
+                    if (userCode.toUpperCase() === serverCode.trim().toUpperCase()) {
+                        showPDF();
+                    } else {
+                        document.getElementById('msgError').style.display = 'block';
+                        document.getElementById('msgError').innerText = "Mã xác nhận không đúng!";
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Lỗi hệ thống");
+                });
+        }
+
+        // 5. Hiển thị PDF
+        function showPDF() {
+            authSection.style.display = 'none';
+            pdfSection.style.display = 'flex'; // Dùng flex để layout đẹp
+
+            const pdfPath = `de/${currentExamId}.pdf`;
+            pdfFrame.src = pdfPath + "#toolbar=0&navpanes=0&scrollbar=0&view=FitH";
+            
+            // Reset xoay
+            currentRotation = 0;
+            pdfFrame.style.transform = 'rotate(0deg) scale(1)';
+        }
+
+        // --- CÁC TÍNH NĂNG CÔNG CỤ (XOAY, TAB MỚI, SIDEBAR) ---
+        
+        // Sidebar Toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.body.classList.toggle('collapsed');
+        });
+
+        // Xoay PDF
+        function rotatePDF() {
+            currentRotation = (currentRotation + 90) % 360;
+            pdfFrame.style.transform = `rotate(${currentRotation}deg)`;
+            if (currentRotation === 90 || currentRotation === 270) {
+                pdfFrame.style.transform += " scale(1.5)"; 
+            } else {
+                pdfFrame.style.transform += " scale(1)";
+            }
+        }
+
+        // Mở tab mới
+        function openNewTab() {
+            if (currentExamId) {
+                window.open(`de/${currentExamId}.pdf`, '_blank');
+            }
+        }
+
+        // Nhấn Enter để check pass
+        document.getElementById('inputCode').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") verifyCode();
+        });
+
+        // Chạy khởi tạo
+        renderExams();
+    </script>
+</body>
+</html>
