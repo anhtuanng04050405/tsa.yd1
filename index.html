@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống tra cứu đáp án</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; 
+            transition: all 0.3s ease;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 250px; 
+            height: 100vh; 
+            background-color: white; 
+            border-right: 1px solid #dee2e6;
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+        
+        .sidebar-logo { 
+            padding: 20px; 
+            text-align: center; 
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-full { max-height: 60px; max-width: 100%; display: block; }
+        .logo-icon { max-height: 50px; max-width: 100%; display: none; }
+
+        .sidebar-menu { margin-top: 20px; }
+        .menu-item {
+            display: flex; 
+            align-items: center; 
+            padding: 12px 20px;
+            color: #555; 
+            text-decoration: none; 
+            transition: 0.3s; 
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .menu-item i { margin-right: 15px; width: 20px; text-align: center; font-size: 18px; transition: 0.3s; }
+        .menu-item:hover { background-color: #f1f1f1; color: #333; }
+        .menu-item.active { background-color: #fff0f0; color: #d32f2f; border-left: 4px solid #d32f2f; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            margin-left: 250px; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+        }
+        .top-header {
+            height: 60px; background-color: white; border-bottom: 1px solid #dee2e6;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+        }
+        
+        .toggle-btn {
+            border: none;
+            background: transparent;
+            font-size: 20px;
+            cursor: pointer;
+            color: #333;
+            padding: 5px 10px;
+        }
+        .toggle-btn:hover { color: #d32f2f; }
+
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background-color: #ddd; }
+        .user-details { text-align: right; line-height: 1.2; }
+        .user-name { font-weight: 600; font-size: 14px; }
+        .logout-text { font-size: 12px; color: #d32f2f; cursor: pointer; }
+
+        /* --- CONTENT AREA --- */
+        .content-area {
+            flex-grow: 1; padding: 20px; display: flex; flex-direction: column; align-items: center;
+            overflow: hidden; position: relative;
+        }
+        .search-container {
+            width: 100%; max-width: 800px; text-align: center; margin-top: 50px; transition: margin-top 0.4s ease;
+            z-index: 10;
+        }
+        .search-container.has-result { margin-top: 0; margin-bottom: 10px; }
+
+        .main-title { color: #d32f2f; font-weight: 700; margin-bottom: 10px; }
+        .input-group-custom {
+            display: flex; gap: 10px; background: white; padding: 5px;
+            border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ddd;
+        }
+        .input-group-custom input { border: none; flex-grow: 1; padding: 10px 15px; outline: none; font-size: 16px; }
+        .btn-search {
+            background-color: #d32f2f; color: white; border: none; padding: 10px 25px;
+            border-radius: 6px; font-weight: 600; transition: 0.3s;
+        }
+        .btn-search:hover { background-color: #b71c1c; }
+
+        /* --- FOLDER VIEW (NEW FEATURE) --- */
+        #folderView {
+            width: 100%; max-width: 800px; display: none; flex-direction: column; gap: 10px; margin-top: 20px;
+        }
+        .folder-item {
+            background: white;
+            border: 2px solid #0dcaf0; /* Màu xanh cyan giống ảnh */
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            font-weight: 700;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-transform: uppercase;
+        }
+        .folder-item:hover {
+            background-color: #e0f7fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* --- PDF VIEWER --- */
+        #resultWrapper {
+            width: 100%; height: 100%; display: none; flex-direction: column; position: relative;
+        }
+        .pdf-toolbar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; }
+        .btn-tool {
+            background: #fff; color: #333; border: 1px solid #ccc; padding: 5px 15px;
+            border-radius: 4px; cursor: pointer; font-size: 14px; transition: 0.2s;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .btn-tool:hover { background: #f0f0f0; border-color: #999; }
+        
+        /* Nút quay lại chỉ hiện khi trong folder */
+        #btnBack { display: none; margin-right: auto; color: #0d6efd; border-color: #0d6efd; }
+        #btnBack:hover { background: #0d6efd; color: white; }
+
+        #iframeContainer {
+            width: 100%; height: calc(100vh - 180px); background: white;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center;
+        }
+        #pdfFrame { width: 100%; height: 100%; border: none; transition: transform 0.3s ease; }
+
+        /* --- ERROR & LOADING --- */
+        #errorScreen {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            height: 300px; width: 100%; background-color: #fff5f5; border: 2px dashed #d32f2f;
+            border-radius: 10px; margin-top: 20px; color: #d32f2f;
+        }
+        #errorScreen i { font-size: 50px; margin-bottom: 15px; }
+        #loading { display: none; margin-top: 20px; color: #d32f2f; }
+
+        .footer { 
+            position: fixed; bottom: 10px; left: 250px; right: 0; 
+            text-align: center; color: #888; font-size: 12px; pointer-events: none;
+            transition: left 0.3s ease;
+        }
+
+        /* --- COLLAPSED STATE --- */
+        body.collapsed .sidebar { width: 80px; }
+        body.collapsed .main-content { margin-left: 80px; }
+        body.collapsed .footer { left: 80px; }
+        body.collapsed .menu-item span { display: none; }
+        body.collapsed .menu-item { justify-content: center; padding: 15px 10px; }
+        body.collapsed .menu-item i { margin-right: 0; font-size: 22px; }
+        body.collapsed .logo-full { display: none; }
+        body.collapsed .logo-icon { display: block; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="img/logo.jpg" alt="Logo" class="logo-full">
+            <img src="img/rutgon.jpg" alt="HSA" class="logo-icon">
+        </div>
+        <div class="sidebar-menu">
+            <a href="danhsachde.html" class="menu-item">
+                <i class="fa-regular fa-clock"></i> <span>Danh sách đề</span>
+            </a>
+            <a href="index.html" class="menu-item active">
+                <i class="fa-solid fa-magnifying-glass"></i> <span>Tra cứu</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-header">
+            <button class="toggle-btn" id="sidebarToggle">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="user-info">
+                <i class="fa-regular fa-bell fa-lg text-secondary"></i>
+                <div class="user-details">
+                    <div class="user-name">Nguyễn Anh Tuấn</div>
+                    <div class="logout-text">Đăng xuất</div>
+                </div>
+                <img src="img/avatar.jpg" alt="User" class="avatar">
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="search-container" id="searchContainer">
+                <h2 class="main-title">Tra cứu lời giải bằng ID</h2>
+                <div class="input-group-custom">
+                    <input type="text" id="searchInput" placeholder="Nhập ID (VD: TEST001)...">
+                    <button class="btn-search" onclick="checkAndRender()">Tra cứu</button>
+                </div>
+            </div>
+
+            <div id="loading">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                <span class="ms-2">Đang kiểm tra dữ liệu...</span>
+            </div>
+
+            <!-- Màn hình danh sách Folder -->
+            <div id="folderView">
+                <!-- Nội dung sẽ được tạo tự động bằng JS -->
+            </div>
+
+            <div id="errorScreen">
+                <i class="fa-regular fa-circle-xmark"></i>
+                <h3>KHÔNG THỂ TÌM THẤY ID LỜI GIẢI</h3>
+                <p>Vui lòng kiểm tra lại mã đề thi hoặc mã câu hỏi.</p>
+            </div>
+
+            <div id="resultWrapper">
+                <div class="pdf-toolbar">
+                    <button class="btn-tool" id="btnBack" onclick="goBackToFolder()">
+                        <i class="fa-solid fa-arrow-left"></i> Quay lại
+                    </button>
+                    <button class="btn-tool" onclick="rotatePDF()">
+                        <i class="fa-solid fa-rotate-right"></i> Xoay ngang
+                    </button>
+                    <button class="btn-tool" onclick="openNewTab()">
+                        <i class="fa-solid fa-expand"></i> Toàn màn hình
+                    </button>
+                </div>
+                <div id="iframeContainer">
+                    <iframe id="pdfFrame" src=""></iframe>
+                </div>
+            </div>
+
+            <div class="footer">&copy; 2026 NGUYỄN ANH TUẤN - K58 - THPT YÊN ĐỊNH 1 - 0818103265</div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CẤU HÌNH DỮ LIỆU FOLDER (BẠN CẬP NHẬT Ở ĐÂY)
+        // Vì web tĩnh không tự quét folder được, bạn phải khai báo file nào nằm trong folder nào.
+        // ==========================================
+        const DU_LIEU_FOLDER = {
+            "TEST1": [
+                { name: "VIDEO-1", file: "video-1.txt", type: "txt" },
+                { name: "VIDEO-2", file: "video-2.txt", type: "txt" },
+                { name: "test nhe.pdf", file: "test nhe.pdf", type: "pdf" },
+                { name: "YÊU CẦU BỘ PHẬN KĨ THUẬT SỬA CODE.pdf", file: "YÊU CẦU BỘ PHẬN KĨ THUẬT SỬA CODE.pdf", type: "pdf" }
+            ],
+            // Bạn có thể thêm ID khác vào đây, ví dụ:
+            // "ID2": [ ... ]
+        };
+
+        // Toggle Sidebar
+        const toggleBtn = document.getElementById('sidebarToggle');
+        const body = document.body;
+        toggleBtn.addEventListener('click', function() {
+            body.classList.toggle('collapsed');
+        });
+
+        // Biến lưu trạng thái
+        let currentRotation = 0;
+        let currentSearchId = ''; 
+        let currentFolderId = ''; // Lưu ID Folder đang xem để nút Back hoạt động
+
+        function checkAndRender() {
+            var rawInput = document.getElementById('searchInput').value.trim();
+            if (!rawInput) { alert("Vui lòng nhập ID!"); return; }
+
+            // YÊU CẦU 1: CHUYỂN VỀ CHỮ HOA (Case Insensitive)
+            // Ví dụ: test1 -> TEST1
+            var inputVal = rawInput.toUpperCase();
+            
+            var searchContainer = document.getElementById('searchContainer');
+            var resultWrapper = document.getElementById('resultWrapper');
+            var errorScreen = document.getElementById('errorScreen');
+            var folderView = document.getElementById('folderView');
+            var loading = document.getElementById('loading');
+            var btnBack = document.getElementById('btnBack');
+
+            // Reset giao diện
+            resultWrapper.style.display = 'none';
+            errorScreen.style.display = 'none';
+            folderView.style.display = 'none';
+            folderView.innerHTML = ''; // Xóa danh sách cũ
+            btnBack.style.display = 'none'; // Ẩn nút back mặc định
+            
+            loading.style.display = 'block';
+            searchContainer.classList.add('has-result');
+
+            currentSearchId = inputVal; // Lưu ID để dùng cho nút toàn màn hình (chế độ thường)
+            currentFolderId = ''; // Reset folder ID
+
+            // YÊU CẦU 2: KIỂM TRA FOLDER TRƯỚC
+            if (DU_LIEU_FOLDER.hasOwnProperty(inputVal)) {
+                // -> Có Folder
+                renderFolderView(inputVal);
+                loading.style.display = 'none';
+            } else {
+                // -> Không có trong dữ liệu Folder, kiểm tra file PDF lẻ như cũ
+                checkDirectPDF(inputVal);
+            }
+        }
+
+        // Hàm xử lý hiển thị danh sách file trong Folder
+        function renderFolderView(folderId) {
+            currentFolderId = folderId; // Đánh dấu đang ở trong folder
+            var folderView = document.getElementById('folderView');
+            var files = DU_LIEU_FOLDER[folderId];
+
+            files.forEach(file => {
+                var btn = document.createElement('div');
+                btn.className = 'folder-item';
+                btn.textContent = file.name;
+                
+                // Sự kiện click vào từng mục
+                btn.onclick = function() {
+                    handleFileClick(folderId, file);
+                };
+                
+                folderView.appendChild(btn);
+            });
+
+            folderView.style.display = 'flex';
+        }
+
+        // Xử lý khi click vào item trong folder
+        function handleFileClick(folderId, fileData) {
+            var path = "loigiai/" + folderId + "/" + fileData.file;
+
+            if (fileData.type === 'txt') {
+                // Nếu là file txt -> đọc nội dung -> mở link youtube
+                fetch(path)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Không tìm thấy file");
+                        return response.text();
+                    })
+                    .then(text => {
+                        var url = text.trim();
+                        if (url) {
+                            window.open(url, '_blank'); // Mở tab mới
+                        } else {
+                            alert("File text rỗng!");
+                        }
+                    })
+                    .catch(err => {
+                        alert("Lỗi khi đọc file video: " + err.message);
+                    });
+
+            } else if (fileData.type === 'pdf') {
+                // Nếu là file pdf -> Ẩn danh sách folder -> Hiện PDF Viewer -> Hiện nút Back
+                document.getElementById('folderView').style.display = 'none';
+                document.getElementById('resultWrapper').style.display = 'flex';
+                document.getElementById('btnBack').style.display = 'flex'; // Hiện nút quay lại
+                
+                currentSearchId = folderId + "/" + fileData.file.replace('.pdf', ''); // Hack để nút toàn màn hình hoạt động tương đối
+                
+                // Reset xoay
+                currentRotation = 0;
+                var pdfFrame = document.getElementById('pdfFrame');
+                resetRotationStyle(pdfFrame);
+                
+                pdfFrame.src = path + "#toolbar=0&navpanes=0&scrollbar=0&view=FitH";
+            }
+        }
+
+        // Hàm quay lại danh sách Folder
+        function goBackToFolder() {
+            document.getElementById('resultWrapper').style.display = 'none';
+            document.getElementById('folderView').style.display = 'flex';
+            // Không cần load lại, chỉ ẩn hiện thôi
+        }
+
+        // Hàm kiểm tra file PDF lẻ (Logic cũ)
+        function checkDirectPDF(id) {
+            var loading = document.getElementById('loading');
+            var errorScreen = document.getElementById('errorScreen');
+            var resultWrapper = document.getElementById('resultWrapper');
+            var pdfFrame = document.getElementById('pdfFrame');
+
+            var filePath = "loigiai/" + id + ".pdf";
+
+            // Cách kiểm tra file tồn tại bằng script tag (Trick cũ của bạn)
+            var testScript = document.createElement('script');
+            testScript.src = filePath;
+
+            testScript.onerror = function() {
+                loading.style.display = 'none';
+                errorScreen.style.display = 'flex';
+                testScript.remove();
+            };
+
+            testScript.onload = function() {
+                loading.style.display = 'none';
+                resultWrapper.style.display = 'flex';
+                pdfFrame.src = filePath + "#toolbar=0&navpanes=0&scrollbar=0&view=FitH";
+                testScript.remove();
+            };
+
+            document.head.appendChild(testScript);
+        }
+
+        function openNewTab() {
+            if (currentSearchId) {
+                // Nếu đang trong folder, currentSearchId sẽ phức tạp hơn chút, nhưng về cơ bản link file là:
+                // Nếu là file lẻ: loigiai/ID.pdf
+                // Nếu là file trong folder: loigiai/ID/File.pdf
+                
+                var url = "";
+                if (currentSearchId.includes('/')) {
+                    // Đang xem file trong folder
+                    url = "loigiai/" + currentSearchId + ".pdf";
+                } else {
+                    // File lẻ
+                    url = "loigiai/" + currentSearchId + ".pdf";
+                }
+                window.open(url, '_blank');
+            }
+        }
+
+        function rotatePDF() {
+            currentRotation = (currentRotation + 90) % 360;
+            const iframe = document.getElementById('pdfFrame');
+            iframe.style.transform = `rotate(${currentRotation}deg)`;
+
+            if (currentRotation === 90 || currentRotation === 270) {
+                iframe.style.transform += " scale(1.5)"; 
+            } else {
+                iframe.style.transform += " scale(1)";
+            }
+        }
+
+        function resetRotationStyle(iframe) {
+            iframe.style.transform = 'rotate(0deg) scale(1)';
+        }
+
+        document.getElementById('searchInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") checkAndRender();
+        });
+    </script>
+
+</body>
+</html>
