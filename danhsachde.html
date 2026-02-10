@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách đề thi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- STYLE CƠ BẢN (GIỐNG INDEX.HTML) --- */
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; overflow: hidden; transition: all 0.3s ease; }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 250px; height: 100vh; background: white; border-right: 1px solid #dee2e6; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 1000; transition: width 0.3s ease; }
+        .sidebar-logo { padding: 20px; text-align: center; height: 80px; display: flex; align-items: center; justify-content: center; }
+        .logo-full { max-height: 60px; max-width: 100%; display: block; }
+        .logo-icon { max-height: 50px; max-width: 100%; display: none; }
+        .sidebar-menu { margin-top: 20px; }
+        .menu-item { display: flex; align-items: center; padding: 12px 20px; color: #555; text-decoration: none; transition: 0.3s; font-weight: 500; white-space: nowrap; overflow: hidden; }
+        .menu-item i { margin-right: 15px; width: 20px; text-align: center; font-size: 18px; transition: 0.3s; }
+        .menu-item:hover { background-color: #f1f1f1; color: #333; }
+        .menu-item.active { background-color: #fff0f0; color: #d32f2f; border-left: 4px solid #d32f2f; }
+
+        /* Main Content Styles */
+        .main-content { margin-left: 250px; height: 100vh; display: flex; flex-direction: column; transition: margin-left 0.3s ease; }
+        .top-header { height: 60px; background: white; border-bottom: 1px solid #dee2e6; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .toggle-btn { border: none; background: transparent; font-size: 20px; cursor: pointer; color: #333; padding: 5px 10px; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #ddd; }
+        .user-details { text-align: right; line-height: 1.2; }
+        .user-name { font-weight: 600; font-size: 14px; }
+        .logout-text { font-size: 12px; color: #d32f2f; cursor: pointer; }
+
+        /* Footer */
+        .footer { position: fixed; bottom: 10px; left: 250px; right: 0; text-align: center; color: #888; font-size: 12px; pointer-events: none; transition: left 0.3s ease; }
+
+        /* Collapsed Logic */
+        body.collapsed .sidebar { width: 80px; }
+        body.collapsed .main-content { margin-left: 80px; }
+        body.collapsed .footer { left: 80px; }
+        body.collapsed .menu-item span { display: none; }
+        body.collapsed .menu-item { justify-content: center; padding: 15px 10px; }
+        body.collapsed .menu-item i { margin-right: 0; font-size: 22px; }
+        body.collapsed .logo-full { display: none; }
+        body.collapsed .logo-icon { display: block; }
+
+        /* --- CÁC STYLE RIÊNG CHO TRANG DANH SÁCH ĐỀ --- */
+        .content-scroll { overflow-y: auto; padding: 20px; flex-grow: 1; position: relative; display: flex; flex-direction: column; align-items: center;}
+        
+        /* 1. Màn hình danh sách (Grid) */
+        #listSection { width: 100%; }
+        .exam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .exam-card { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; transition: 0.3s; position: relative; }
+        .exam-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #d32f2f; }
+        .tag-badge { position: absolute; top: 15px; left: 15px; background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; font-size: 12px; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        .exam-name { margin-top: 25px; font-weight: 700; font-size: 16px; margin-bottom: 20px; line-height: 1.4; color: #333; }
+        .btn-continue { width: 100%; border: 1px solid #0d6efd; color: #0d6efd; background: white; padding: 8px; border-radius: 20px; font-weight: 600; transition: 0.3s; text-transform: uppercase; font-size: 14px; }
+        .btn-continue:hover { background: #0d6efd; color: white; }
+
+        /* 2. Màn hình nhập mã */
+        #authSection { display: none; width: 100%; max-width: 600px; margin-top: 40px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; }
+        .auth-logo { max-width: 200px; margin-bottom: 20px; }
+        .form-check-group { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .form-check-group label { background: #e9ecef; padding: 10px 15px; border-radius: 4px 0 0 4px; border: 1px solid #ced4da; border-right: none; font-weight: 500; color: #555; white-space: nowrap;}
+        .form-check-group input { border-radius: 0 4px 4px 0; height: 46px; }
+        .btn-check-code { background: #0044cc; color: white; width: 100%; padding: 10px; border-radius: 6px; font-weight: 600; border: none; }
+        .btn-check-code:hover { background: #003399; }
+        .back-link { display: inline-block; margin-top: 15px; color: #0d6efd; text-decoration: none; font-size: 14px; cursor: pointer; }
+        .back-link:hover { text-decoration: underline; }
+
+        /* 3. FOLDER VIEW (TÍNH NĂNG MỚI) */
+        #folderView { width: 100%; max-width: 800px; display: none; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .folder-item {
+            background: white; border: 2px solid #0dcaf0; /* Màu xanh cyan */
+            border-radius: 10px; padding: 15px; text-align: center;
+            font-weight: 700; color: #333; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-transform: uppercase;
+        }
+        .folder-item:hover { background-color: #e0f7fa; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+        /* 4. Màn hình xem PDF */
+        #pdfSection { display: none; width: 100%; height: 100%; flex-direction: column; }
+        .pdf-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .pdf-toolbar { display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-tool { background: #fff; color: #333; border: 1px solid #ccc; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-tool:hover { background: #f0f0f0; }
+        #iframeContainer { flex-grow: 1; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: calc(100vh - 150px); }
+        #pdfFrame { width: 100%; height: 100%; border: none; transition: transform 0.3s ease; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="img/logo.jpg" alt="Logo" class="logo-full">
+            <img src="img/rutgon.jpg" alt="HSA" class="logo-icon">
+        </div>
+        <div class="sidebar-menu">
+            <a href="danhsachde.html" class="menu-item active"><i class="fa-regular fa-clock"></i> <span>Danh sách đề</span></a>
+            <a href="index.html" class="menu-item"><i class="fa-solid fa-magnifying-glass"></i> <span>Tra cứu</span></a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-header">
+            <button class="toggle-btn" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+            <div class="user-info">
+                <i class="fa-regular fa-bell fa-lg text-secondary"></i>
+                <div class="user-details"><div class="user-name">Nguyễn Anh Tuấn</div><div class="logout-text">Đăng xuất</div></div>
+                <img src="img/avatar.jpg" alt="User" class="avatar">
+            </div>
+        </div>
+
+        <div class="content-scroll">
+            
+            <!-- 1. DANH SÁCH ĐỀ THI -->
+            <div id="listSection">
+                <h4 style="color: #003366; font-weight: 700; margin-bottom: 20px;">Danh sách phòng thi</h4>
+                <div class="exam-grid" id="examContainer">
+                    <!-- Javascript sẽ render -->
+                </div>
+            </div>
+
+            <!-- 2. KHUNG NHẬP MÃ -->
+            <div id="authSection">
+                <div class="text-start mb-3"><span class="back-link" onclick="goBackToList()" style="margin:0"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</span></div>
+                
+                <h5 id="selectedExamTitle" style="font-weight: 700; margin-bottom: 20px;">TÊN ĐỀ THI</h5>
+                <img src="img/logo.jpg" alt="Logo" class="auth-logo">
+                <p>Xác nhận thông tin</p>
+
+                <div class="form-check-group">
+                    <label>Mã xác nhận</label>
+                    <input type="password" id="inputCode" class="form-control" placeholder="Nhập mã code...">
+                </div>
+                
+                <p class="text-start text-primary" style="font-size: 13px; font-style: italic;">
+                    Vui lòng liên hệ với người quản trị để nhận code
+                </p>
+
+                <button class="btn-check-code" onclick="verifyCode()">Bắt đầu</button>
+                <div id="msgError" class="text-danger mt-2" style="display:none; font-size:14px;"><i class="fa-solid fa-triangle-exclamation"></i> Mã xác nhận không chính xác!</div>
+            </div>
+
+            <!-- 3. MÀN HÌNH FOLDER -->
+            <div id="folderView">
+                <div class="text-start mb-2"><span class="back-link" onclick="goBackToAuth()" style="margin:0"><i class="fa-solid fa-arrow-left"></i> Quay lại nhập mã</span></div>
+                <div id="folderContent"></div>
+            </div>
+
+            <!-- 4. TRÌNH XEM PDF -->
+            <div id="pdfSection">
+                <div class="pdf-header">
+                    <span class="back-link" id="btnBackPDF" onclick="goBackFromPDF()" style="margin:0"><i class="fa-solid fa-arrow-left"></i> Quay lại</span>
+                    <div class="pdf-toolbar">
+                        <button class="btn-tool" onclick="rotatePDF()"><i class="fa-solid fa-rotate-right"></i> Xoay ngang</button>
+                        <button class="btn-tool" onclick="openNewTab()"><i class="fa-solid fa-expand"></i> Toàn màn hình</button>
+                    </div>
+                </div>
+                
+                <div id="iframeContainer">
+                    <iframe id="pdfFrame" src=""></iframe>
+                </div>
+            </div>
+
+            <div class="footer">&copy; 2026 NGUYỄN ANH TUẤN - K58 - THPT YÊN ĐỊNH 1</div>
+        </div>
+    </div>
+
+    <script>
+        // ===============================================
+        // CẤU HÌNH DỮ LIỆU (BẠN SỬA Ở ĐÂY)
+        // ===============================================
+        
+        const DANH_SACH_DE = [
+            { id: 1, name: "1. ĐỀ MÔN LỊCH SỬ (ĐỀ 01-20)", tag: "HSA" },
+            { id: 2, name: "2. ĐỀ TƯ DUY ĐỊNH LƯỢNG (ĐỀ 01-10)", tag: "HSA" },
+            { id: 3, name: "3. TEST (CÓ FOLDER)", tag: "TSA" }, 
+            { id: 4, name: "4. TEST", tag: "HSA" },
+        ];
+
+        // KHAI BÁO FILE TRONG FOLDER
+        // Theo ảnh Github: trong folder "de/3" có file gì thì điền vào đây
+        const DU_LIEU_FOLDER = {
+            "3": [
+                { name: "YÊU CẦU BỘ PHẬN KĨ THUẬT SỬA CODE", file: "YÊU CẦU BỘ PHẬN KĨ THUẬT SỬA CODE.pdf", type: "pdf" },
+                { name: "VIDEO 1 (Giải chi tiết)", file: "video-1.txt", type: "txt" },
+                { name: "VIDEO 2 (Phần mở rộng)", file: "video-2.txt", type: "txt" },
+                { name: "TEST NHẸ", file: "test nhe.pdf", type: "pdf" }
+            ],
+            // Nếu sau này ID 4 có folder thì thêm vào đây:
+            // "4": [ ... ]
+        };
+
+        // ===============================================
+        
+        const listSection = document.getElementById('listSection');
+        const authSection = document.getElementById('authSection');
+        const folderView = document.getElementById('folderView');
+        const pdfSection = document.getElementById('pdfSection');
+        const examContainer = document.getElementById('examContainer');
+        const pdfFrame = document.getElementById('pdfFrame');
+        
+        let currentExamId = null;
+        let currentRotation = 0;
+        let isViewingFromFolder = false; // Đánh dấu đang xem từ folder hay file lẻ
+        let currentPDFUrl = ""; 
+
+        // 1. Render danh sách đề
+        function renderExams() {
+            examContainer.innerHTML = '';
+            DANH_SACH_DE.forEach(exam => {
+                const html = `
+                    <div class="exam-card">
+                        <span class="tag-badge">${exam.tag}</span>
+                        <h5 class="exam-name">${exam.name}</h5>
+                        <button class="btn-continue" onclick="selectExam(${exam.id}, '${exam.name}')">Tiếp tục</button>
+                    </div>
+                `;
+                examContainer.innerHTML += html;
+            });
+        }
+
+        // 2. Chọn đề -> Chuyển sang màn nhập mã
+        function selectExam(id, name) {
+            currentExamId = id;
+            document.getElementById('selectedExamTitle').innerText = name;
+            document.getElementById('inputCode').value = '';
+            document.getElementById('msgError').style.display = 'none';
+
+            listSection.style.display = 'none';
+            authSection.style.display = 'block';
+        }
+
+        // 3. Kiểm tra mã
+        function verifyCode() {
+            const userCode = document.getElementById('inputCode').value.trim();
+            if (!userCode) { alert("Vui lòng nhập mã!"); return; }
+
+            // Tìm file pass tương ứng trong folder pass/
+            fetch(`pass/${currentExamId}.txt?t=${new Date().getTime()}`)
+                .then(response => {
+                    if (!response.ok) throw new Error("Không tìm thấy file pass");
+                    return response.text();
+                })
+                .then(serverCode => {
+                    if (userCode.toUpperCase() === serverCode.trim().toUpperCase()) {
+                        // Đúng mã -> Kiểm tra tiếp xem có Folder hay không
+                        checkAndRenderContent(currentExamId);
+                    } else {
+                        document.getElementById('msgError').style.display = 'block';
+                        document.getElementById('msgError').innerText = "Mã xác nhận không đúng!";
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Lỗi: Không tìm thấy file mật khẩu cho đề này!");
+                });
+        }
+
+        // 4. Quyết định hiển thị: Folder hay PDF
+        function checkAndRenderContent(id) {
+            const idStr = id.toString();
+
+            if (DU_LIEU_FOLDER.hasOwnProperty(idStr)) {
+                // -> CÓ FOLDER: Render các nút bấm
+                renderFolderItems(DU_LIEU_FOLDER[idStr]);
+                authSection.style.display = 'none';
+                folderView.style.display = 'flex';
+            } else {
+                // -> KHÔNG CÓ FOLDER: Mở file PDF mặc định (de/ID.pdf)
+                showPDF(`de/${id}.pdf`, false); 
+            }
+        }
+
+        // 5. Render danh sách file trong Folder
+        function renderFolderItems(files) {
+            const container = document.getElementById('folderContent');
+            container.innerHTML = ''; 
+
+            files.forEach(file => {
+                const btn = document.createElement('div');
+                btn.className = 'folder-item';
+                btn.textContent = file.name;
+                btn.onclick = function() {
+                    handleFolderItemClick(file);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // 6. Xử lý khi bấm vào file trong Folder
+        function handleFolderItemClick(fileData) {
+            // SỬA ĐƯỜNG DẪN Ở ĐÂY: de/{currentExamId}/{file.file}
+            const path = `de/${currentExamId}/${fileData.file}`;
+
+            if (fileData.type === 'txt') {
+                // File txt chứa link youtube
+                fetch(path).then(res => {
+                    if(!res.ok) throw new Error("404");
+                    return res.text();
+                }).then(url => {
+                    if(url.trim()) window.open(url.trim(), '_blank');
+                }).catch(err => {
+                    alert("Lỗi: Không tìm thấy file txt (" + path + ")");
+                });
+
+            } else if (fileData.type === 'pdf') {
+                // Mở PDF
+                showPDF(path, true); // true = đánh dấu đang xem từ folder
+            }
+        }
+
+        // 7. Hiển thị trình xem PDF
+        function showPDF(path, fromFolder) {
+            isViewingFromFolder = fromFolder;
+            currentPDFUrl = path;
+
+            authSection.style.display = 'none';
+            folderView.style.display = 'none';
+            pdfSection.style.display = 'flex';
+
+            pdfFrame.src = path + "#toolbar=0&navpanes=0&scrollbar=0&view=FitH";
+            
+            // Reset xoay
+            currentRotation = 0;
+            pdfFrame.style.transform = 'rotate(0deg) scale(1)';
+        }
+
+        // --- CÁC NÚT QUAY LẠI (BACK) ---
+
+        // Từ trang nhập mã -> Về danh sách
+        function goBackToList() {
+            authSection.style.display = 'none';
+            listSection.style.display = 'block';
+            currentExamId = null;
+        }
+
+        // Từ Folder -> Về nhập mã
+        function goBackToAuth() {
+            folderView.style.display = 'none';
+            authSection.style.display = 'block';
+        }
+
+        // Từ màn hình PDF -> Quay lại đâu?
+        function goBackFromPDF() {
+            pdfSection.style.display = 'none';
+            pdfFrame.src = ""; // Stop load PDF
+
+            if (isViewingFromFolder) {
+                // Nếu đang xem từ folder -> Về lại folder
+                folderView.style.display = 'flex';
+            } else {
+                // Nếu xem file lẻ -> Về lại trang nhập mã
+                authSection.style.display = 'block';
+            }
+        }
+
+        // --- CÔNG CỤ PDF ---
+
+        function rotatePDF() {
+            currentRotation = (currentRotation + 90) % 360;
+            const iframe = document.getElementById('pdfFrame');
+            iframe.style.transform = `rotate(${currentRotation}deg)`;
+            
+            // Phóng to một chút khi xoay dọc để dễ nhìn
+            if (currentRotation === 90 || currentRotation === 270) {
+                iframe.style.transform += " scale(1.5)"; 
+            } else {
+                iframe.style.transform += " scale(1)";
+            }
+        }
+
+        function openNewTab() {
+            if (currentPDFUrl) {
+                window.open(currentPDFUrl, '_blank');
+            }
+        }
+
+        // Sidebar logic
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.body.classList.toggle('collapsed');
+        });
+
+        // Enter để submit code
+        document.getElementById('inputCode').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") verifyCode();
+        });
+
+        // Khởi chạy
+        renderExams();
+    </script>
+</body>
+</html>
