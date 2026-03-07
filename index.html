@@ -295,7 +295,7 @@
         <!-- Bài thi 1: TOÁN -->
         <div class="exam-item">
             <div>
-                <h3>1. Tư Duy Toán Học 32</h3>
+                <h3>PHẦN THI: TƯ DUY TOÁN HỌC</h3>
                 <div class="exam-details">
                     <span class="code-box"><span id="label-toan">Mã dự thi:</span> <strong id="code-toan">---</strong></span>
                     <span class="code-box" id="box-confirm-toan">Mã xác nhận: <strong id="confirm-toan">---</strong></span>
@@ -309,7 +309,7 @@
         <!-- Bài thi 2: ĐỌC HIỂU -->
         <div class="exam-item">
             <div>
-                <h3>2. Tư Duy Đọc Hiểu 14</h3>
+                <h3>PHẦN THI: TƯ DUY ĐỌC HIỂU</h3>
                 <div class="exam-details">
                     <span class="code-box"><span id="label-dochieu">Mã dự thi:</span> <strong id="code-dochieu">---</strong></span>
                     <span class="code-box" id="box-confirm-dochieu">Mã xác nhận: <strong id="confirm-dochieu">---</strong></span>
@@ -323,7 +323,7 @@
         <!-- Bài thi 3: KHOA HỌC -->
         <div class="exam-item">
             <div>
-                <h3>3. Tư Duy Khoa Học 13</h3>
+                <h3>PHẦN THI: TƯ DUY KHOA HỌC/ GIẢI QUYẾT VẤN ĐỀ</h3>
                 <div class="exam-details">
                     <span class="code-box"><span id="label-khoahoc">Mã dự thi:</span> <strong id="code-khoahoc">---</strong></span>
                     <span class="code-box" id="box-confirm-khoahoc">Mã xác nhận: <strong id="confirm-khoahoc">---</strong></span>
@@ -366,8 +366,8 @@
 
             if (isScore(subjectValue)) {
                 // TRƯỜNG HỢP ĐÃ CÓ ĐIỂM SỐ
-                labelEl.innerText = "Điểm thi:";
-                codeEl.innerText = `${subjectValue} / 40`;
+                labelEl.innerText = "Điểm thi: ";
+                codeEl.innerText = `${subjectValue}/40`;
                 codeEl.className = "score-text"; // Đổi màu điểm cho nổi bật
                 
                 boxConfirmEl.style.display = "none"; // Ẩn hoàn toàn ô Mã xác nhận
