@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đánh Giá Tư Duy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            /* Sử dụng ảnh nền của bạn */
+            background-image: url('backgroung.png'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffe6e6; /* Màu nền dự phòng */
+        }
+
+        /* --- CSS MÀN HÌNH ĐĂNG NHẬP --- */
+        #login-screen {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        #login-screen img {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #d32f2f;
+        }
+
+        .btn-login {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-login:hover {
+            background-color: #b71c1c;
+        }
+
+        /* --- CSS MÀN HÌNH CHÍNH (BÀI THI) --- */
+        #main-screen {
+            display: none; /* Ẩn lúc ban đầu */
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            width: 900px;
+            max-width: 95%;
+            padding: 40px;
+            margin: 20px 0;
+        }
+
+        .header-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header-logo img {
+            height: 40px;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 30px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon-circle {
+            width: 40px;
+            height: 40px;
+            background-color: #e8f5e9;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #2e7d32;
+        }
+
+        .info-text span {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .info-text strong {
+            display: block;
+            font-size: 15px;
+            color: #333;
+            margin-top: 4px;
+        }
+
+        .exam-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .exam-list-header h2 {
+            font-size: 20px;
+            color: #111;
+        }
+
+        .exam-list-header span {
+            font-size: 13px;
+            color: #888;
+            font-weight: bold;
+        }
+
+        .exam-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .exam-item h3 {
+            font-size: 16px;
+            color: #d32f2f;
+            margin-bottom: 8px;
+        }
+
+        .exam-details {
+            font-size: 13px;
+            color: #555;
+            display: flex;
+            gap: 20px;
+        }
+
+        .status-green { color: #2e7d32; font-weight: 600; }
+
+        .btn-exam {
+            padding: 10px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-exam.active {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        .btn-exam.active:hover {
+            background-color: #b71c1c;
+        }
+
+        .btn-exam.disabled {
+            background-color: #e0e0e0;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .footer-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #111;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MÀN HÌNH ĐĂNG NHẬP SỐ BÁO DANH -->
+    <div id="login-screen">
+        <img src="logo.png" alt="Logo">
+        <div class="input-group">
+            <label for="sbd-input">Nhập số báo danh:</label>
+            <input type="text" id="sbd-input" placeholder="VD: TSA2602_200026">
+        </div>
+        <button class="btn-login" onclick="login()">Đăng nhập</button>
+        <p id="error-msg" style="color: red; margin-top: 15px; font-size: 14px; display: none;"></p>
+    </div>
+
+    <!-- MÀN HÌNH CHÍNH (BÀI THI) -->
+    <div id="main-screen">
+        <div class="header-logo">
+            <img src="logo.png" alt="Logo">
+        </div>
+
+        <div class="user-info">
+            <div class="info-item">
+                <div class="icon-circle">
+                    <!-- SVG Icon User -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="info-text">
+                    <span>Họ tên</span>
+                    <strong id="ui-name">Đang tải...</strong>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="icon-circle">
+                    <!-- SVG Icon Calendar -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div class="info-text">
+                    <span>Ngày sinh</span>
+                    <strong id="ui-dob">Đang tải...</strong>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="icon-circle">
+                    <!-- SVG Icon ID -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <div class="info-text">
+                    <span>Mã định danh</span>
+                    <strong id="ui-id">Đang tải...</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="exam-list-header">
+            <h2>Danh sách bài thi</h2>
+            <span>3 BÀI THI KHẢ DỤNG</span>
+        </div>
+
+        <!-- Bài thi 1 -->
+        <div class="exam-item">
+            <div>
+                <h3>1. Tư Duy Toán Học 32</h3>
+                <div class="exam-details">
+                    <span>Giờ mở kíp: 18:01 24/01/2026 - 18:01 30/04/2026</span>
+                    <span>Thời gian: 60 phút</span>
+                    <span>Trạng thái: <span class="status-green">Chưa thi</span></span>
+                </div>
+            </div>
+            <button id="btn-exam-1" class="btn-exam disabled">Tiếp tục</button>
+        </div>
+
+        <!-- Bài thi 2 -->
+        <div class="exam-item">
+            <div>
+                <h3>2. Tư Duy Đọc Hiểu 14</h3>
+                <div class="exam-details">
+                    <span>Giờ mở kíp: 18:01 24/01/2026 - 18:01 30/04/2026</span>
+                    <span>Thời gian: 60 phút</span>
+                    <span>Trạng thái: <span class="status-green">Chưa thi</span></span>
+                </div>
+            </div>
+            <button id="btn-exam-2" class="btn-exam disabled">Tiếp tục</button>
+        </div>
+
+        <!-- Bài thi 3 -->
+        <div class="exam-item">
+            <div>
+                <h3>3. Tư Duy Khoa Học 13</h3>
+                <div class="exam-details">
+                    <span>Giờ mở kíp: 18:01 24/01/2026 - 18:01 30/04/2026</span>
+                    <span>Thời gian: 60 phút</span>
+                    <span>Trạng thái: <span class="status-green">Chưa thi</span></span>
+                </div>
+            </div>
+            <button id="btn-exam-3" class="btn-exam disabled">Tiếp tục</button>
+        </div>
+
+        <a href="#" class="footer-link" onclick="location.reload()">Về trang luyện đề (Đăng xuất)</a>
+    </div>
+
+    <!-- SCRIPT XỬ LÝ LOGIC -->
+    <script>
+        // Cho phép ấn Enter để đăng nhập
+        document.getElementById("sbd-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                login();
+            }
+        });
+
+        async function login() {
+            const sbd = document.getElementById('sbd-input').value.trim();
+            const errorMsg = document.getElementById('error-msg');
+            
+            if (!sbd) {
+                errorMsg.innerText = "Vui lòng nhập số báo danh!";
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            try {
+                // Đọc file text từ thư mục sobaodanh/
+                const response = await fetch(`sobaodanh/${sbd}.txt`);
+                
+                if (!response.ok) {
+                    throw new Error("Không tìm thấy số báo danh này. Vui lòng kiểm tra lại!");
+                }
+
+                // Lấy nội dung text
+                const text = await response.text();
+                
+                // Tách từng dòng (line break)
+                // Hỗ trợ cả \r\n (Windows) và \n (Linux/Mac)
+                const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+
+                // Theo cấu trúc file txt bạn cung cấp:
+                // Dòng 1: Tên
+                // Dòng 2: Ngày sinh
+                // Dòng 3, 4, 5: Link bài thi
+                const name = lines[0] || "Chưa cập nhật";
+                const dob = lines[1] || "Chưa xác định";
+                const link1 = lines[2] || "";
+                const link2 = lines[3] || "";
+                const link3 = lines[4] || "";
+
+                // Đổ dữ liệu lên giao diện
+                document.getElementById('ui-name').innerText = name;
+                document.getElementById('ui-dob').innerText = dob;
+                document.getElementById('ui-id').innerText = sbd;
+
+                // Cài đặt link cho các nút "Tiếp tục"
+                setupButton('btn-exam-1', link1);
+                setupButton('btn-exam-2', link2);
+                setupButton('btn-exam-3', link3);
+
+                // Chuyển màn hình
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-screen').style.display = 'block';
+
+            } catch (error) {
+                errorMsg.innerText = error.message;
+                errorMsg.style.display = "block";
+            }
+        }
+
+        function setupButton(buttonId, link) {
+            const btn = document.getElementById(buttonId);
+            // Kiểm tra xem có link không và link có bắt đầu bằng http không
+            if (link && link.startsWith('http')) {
+                btn.className = 'btn-exam active'; // Đổi sang màu đỏ
+                btn.onclick = () => window.open(link, '_blank'); // Mở link sang tab mới
+            } else {
+                btn.className = 'btn-exam disabled'; // Đổi sang màu xám
+                btn.onclick = null; // Tắt tính năng click
+            }
+        }
+    </script>
+</body>
+</html>
