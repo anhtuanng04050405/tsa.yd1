@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đánh Giá Tư Duy</title>
+    
+    <!-- Thư viện SheetJS để đọc Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-image: url('backgroung.png'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffe6e6;
+        }
+
+        #login-screen {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        #login-screen img {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #d32f2f;
+        }
+
+        .btn-login {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-login:hover {
+            background-color: #b71c1c;
+        }
+
+        #main-screen {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            width: 900px;
+            max-width: 95%;
+            padding: 40px;
+            margin: 20px 0;
+        }
+
+        .header-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header-logo img {
+            height: 40px;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 30px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon-circle {
+            width: 40px;
+            height: 40px;
+            background-color: #e8f5e9;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #2e7d32;
+        }
+
+        .info-text span {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .info-text strong {
+            display: block;
+            font-size: 15px;
+            color: #333;
+            margin-top: 4px;
+        }
+
+        .exam-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .exam-list-header h2 {
+            font-size: 20px;
+            color: #111;
+        }
+
+        .exam-list-header span {
+            font-size: 13px;
+            color: #888;
+            font-weight: bold;
+        }
+
+        .exam-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .exam-item h3 {
+            font-size: 16px;
+            color: #d32f2f;
+            margin-bottom: 8px;
+        }
+
+        .exam-details {
+            font-size: 13px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .code-box {
+            background-color: #f1f3f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .code-box strong {
+            color: #000;
+            font-family: monospace;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* Thêm class màu cho Điểm và Trạng thái hoàn thành */
+        .score-text { color: #d32f2f !important; font-size: 15px !important; }
+        .status-green { color: #2e7d32; font-weight: 600; }
+        .status-blue { color: #1976d2; font-weight: 600; } /* Trạng thái đã thi */
+
+        .btn-exam {
+            padding: 10px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 120px;
+        }
+
+        .btn-exam.active {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        .btn-exam.active:hover {
+            background-color: #b71c1c;
+        }
+
+        .btn-exam.disabled {
+            background-color: #e0e0e0;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .footer-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #111;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <img src="logo.png" alt="Logo">
+        <div class="input-group">
+            <label for="sbd-input">Nhập số báo danh:</label>
+            <input type="text" id="sbd-input" placeholder="VD: TSA2602_200026">
+        </div>
+        <button class="btn-login" onclick="login()">Đăng nhập</button>
+        <p id="error-msg" style="color: red; margin-top: 15px; font-size: 14px; display: none;"></p>
+    </div>
+
+    <div id="main-screen">
+        <div class="header-logo">
+            <img src="logo.png" alt="Logo">
+        </div>
+
+        <div class="user-info">
+            <div class="info-item">
+                <div class="icon-circle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="info-text">
+                    <span>Họ tên</span>
+                    <strong id="ui-name">Chưa cập nhật</strong>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="icon-circle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div class="info-text">
+                    <span>Ngày sinh</span>
+                    <strong id="ui-dob">Chưa cập nhật</strong>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="icon-circle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <div class="info-text">
+                    <span>Mã định danh</span>
+                    <strong id="ui-id">Đang tải...</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="exam-list-header">
+            <h2>Danh sách bài thi</h2>
+            <span>3 BÀI THI KHẢ DỤNG</span>
+        </div>
+
+        <!-- Bài thi 1: TOÁN -->
+        <div class="exam-item">
+            <div>
+                <h3>1. Tư Duy Toán Học 32</h3>
+                <div class="exam-details">
+                    <span class="code-box"><span id="label-toan">Mã dự thi:</span> <strong id="code-toan">---</strong></span>
+                    <span class="code-box" id="box-confirm-toan">Mã xác nhận: <strong id="confirm-toan">---</strong></span>
+                    <span>Thời gian: 60 phút</span>
+                    <span>Trạng thái: <span id="status-toan" class="status-green">Chưa thi</span></span>
+                </div>
+            </div>
+            <button id="btn-exam-1" class="btn-exam active">Tiếp tục</button>
+        </div>
+
+        <!-- Bài thi 2: ĐỌC HIỂU -->
+        <div class="exam-item">
+            <div>
+                <h3>2. Tư Duy Đọc Hiểu 14</h3>
+                <div class="exam-details">
+                    <span class="code-box"><span id="label-dochieu">Mã dự thi:</span> <strong id="code-dochieu">---</strong></span>
+                    <span class="code-box" id="box-confirm-dochieu">Mã xác nhận: <strong id="confirm-dochieu">---</strong></span>
+                    <span>Thời gian: 60 phút</span>
+                    <span>Trạng thái: <span id="status-dochieu" class="status-green">Chưa thi</span></span>
+                </div>
+            </div>
+            <button id="btn-exam-2" class="btn-exam active">Tiếp tục</button>
+        </div>
+
+        <!-- Bài thi 3: KHOA HỌC -->
+        <div class="exam-item">
+            <div>
+                <h3>3. Tư Duy Khoa Học 13</h3>
+                <div class="exam-details">
+                    <span class="code-box"><span id="label-khoahoc">Mã dự thi:</span> <strong id="code-khoahoc">---</strong></span>
+                    <span class="code-box" id="box-confirm-khoahoc">Mã xác nhận: <strong id="confirm-khoahoc">---</strong></span>
+                    <span>Thời gian: 60 phút</span>
+                    <span>Trạng thái: <span id="status-khoahoc" class="status-green">Chưa thi</span></span>
+                </div>
+            </div>
+            <button id="btn-exam-3" class="btn-exam active">Tiếp tục</button>
+        </div>
+
+        <a href="#" class="footer-link" onclick="location.reload()">Về trang luyện đề (Đăng xuất)</a>
+    </div>
+
+    <script>
+        document.getElementById("sbd-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                login();
+            }
+        });
+
+        const EXAM_LINK = "https://e.khaothi.online/e3";
+
+        // Hàm kiểm tra xem giá trị trong Excel là Điểm số hay là Mã dự thi
+        function isScore(value) {
+            if (value === undefined || value === null || value === "") return false;
+            let num = Number(value);
+            // Nếu là số và nằm trong khoảng 0 đến 40 thì coi đó là ĐIỂM
+            return !isNaN(num) && num >= 0 && num <= 40;
+        }
+
+        // Hàm xử lý hiển thị cho từng môn học
+        function renderSubject(subjectValue, confirmCode, type) {
+            const labelEl = document.getElementById(`label-${type}`);
+            const codeEl = document.getElementById(`code-${type}`);
+            const boxConfirmEl = document.getElementById(`box-confirm-${type}`);
+            const confirmEl = document.getElementById(`confirm-${type}`);
+            const statusEl = document.getElementById(`status-${type}`);
+            const btnEl = document.getElementById(`btn-exam-${type === 'toan' ? 1 : type === 'dochieu' ? 2 : 3}`);
+
+            if (isScore(subjectValue)) {
+                // TRƯỜNG HỢP ĐÃ CÓ ĐIỂM SỐ
+                labelEl.innerText = "Điểm thi:";
+                codeEl.innerText = `${subjectValue} / 40`;
+                codeEl.className = "score-text"; // Đổi màu điểm cho nổi bật
+                
+                boxConfirmEl.style.display = "none"; // Ẩn hoàn toàn ô Mã xác nhận
+                
+                statusEl.innerText = "Đã hoàn thành";
+                statusEl.className = "status-blue"; // Chuyển trạng thái sang màu xanh dương
+                
+                btnEl.innerText = "Đã nộp bài";
+                btnEl.className = "btn-exam disabled";
+                btnEl.onclick = null; // Tắt tính năng click chuyển trang
+            } else {
+                // TRƯỜNG HỢP LÀ MÃ DỰ THI (CHƯA THI)
+                labelEl.innerText = "Mã dự thi:";
+                codeEl.innerText = subjectValue || "Chưa có";
+                codeEl.className = ""; 
+                
+                boxConfirmEl.style.display = "inline-block"; // Hiện ô Mã xác nhận
+                confirmEl.innerText = confirmCode || "N/A";
+                
+                statusEl.innerText = "Chưa thi";
+                statusEl.className = "status-green";
+                
+                btnEl.innerText = "Tiếp tục";
+                btnEl.className = "btn-exam active";
+                btnEl.onclick = () => window.open(EXAM_LINK, '_blank');
+            }
+        }
+
+        async function login() {
+            const sbd = document.getElementById('sbd-input').value.trim();
+            const errorMsg = document.getElementById('error-msg');
+            
+            if (!sbd) {
+                errorMsg.innerText = "Vui lòng nhập số báo danh!";
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            try {
+                // Đọc file Excel maduthi.xlsx
+                const excelResponse = await fetch('maduthi.xlsx');
+                if (!excelResponse.ok) throw new Error("Không thể tải file hệ thống maduthi.xlsx");
+                const arrayBuffer = await excelResponse.arrayBuffer();
+                
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const excelData = XLSX.utils.sheet_to_json(worksheet);
+
+                // Tìm SBD trong file Excel
+                const studentRow = excelData.find(row => row['Số báo danh'] === sbd);
+
+                if (!studentRow) {
+                    throw new Error("Số báo danh không tồn tại trong hệ thống!");
+                }
+
+                // Gán Họ tên và Ngày sinh (Nếu bạn thêm cột này vào Excel, nó sẽ tự hiện, nếu không sẽ hiện "Chưa cập nhật")
+                document.getElementById('ui-name').innerText = studentRow['Họ tên'] || "Chưa cập nhật";
+                document.getElementById('ui-dob').innerText = studentRow['Ngày sinh'] || "Chưa cập nhật";
+                document.getElementById('ui-id').innerText = sbd;
+
+                const maXacNhan = studentRow['Mã xác nhận'];
+
+                // Render giao diện cho từng môn (tự động phân biệt Mã dự thi hay Điểm số)
+                renderSubject(studentRow['Toán'], maXacNhan, 'toan');
+                renderSubject(studentRow['Đọc hiểu'], maXacNhan, 'dochieu');
+                renderSubject(studentRow['Khoa học'], maXacNhan, 'khoahoc');
+
+                // Chuyển màn hình
+                errorMsg.style.display = "none";
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-screen').style.display = 'block';
+
+            } catch (error) {
+                errorMsg.innerText = error.message;
+                errorMsg.style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>
